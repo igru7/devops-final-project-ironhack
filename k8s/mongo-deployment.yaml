@@ -1,0 +1,83 @@
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      securityContext:
+        fsGroup: 1001   # ← add it here
+      containers:
+        - name: mongo
+          image: bitnami/mongodb:latest
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGODB_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_ROOT_USER
+            - name: MONGODB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_ROOT_PASSWORD
+            - name: MONGODB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_USERNAME
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_PASSWORD
+            - name: MONGODB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_DATABASE
+            - name: MONGODB_EXTRA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_EXTRA_USERNAME
+            - name: MONGODB_EXTRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_EXTRA_PASSWORD
+            - name: MONGODB_EXTRA_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_EXTRA_DATABASE
+          volumeMounts:
+            - name: mongo-storage
+              mountPath: /bitnami/mongodb
+      volumes:
+        - name: mongo-storage
+          persistentVolumeClaim:
+            claimName: mongo-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  type: ClusterIP
+  selector:
+    app: mongo
+  ports:
+    - port: 27017
+      targetPort: 27017

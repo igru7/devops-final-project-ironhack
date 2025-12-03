@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongo-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: manual
+  azureDisk:
+    diskName: mongo-disk
+    diskURI: /subscriptions/f71e57a8-1bec-4f66-9f47-b0d4e4e77225/resourcegroups/MC_irene-rg-eastus_aks-irene-eastus_eastus/providers/Microsoft.Compute/disks/mongo-disk
+    kind: Managed
+    cachingMode: None
+    fsType: ext4

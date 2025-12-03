@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: irene53179/expensy_backend:latest
+        ports:
+        - containerPort: 8706
+        env:
+            - name: MONGODB_EXTRA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_EXTRA_USERNAME
+            - name: MONGODB_EXTRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: MONGODB_EXTRA_PASSWORD
+            - name: DATABASE_URI
+              value: "mongodb://mongo:$(MONGODB_EXTRA_USERNAME):$(MONGODB_EXTRA_PASSWORD)@mongo:27017/mydb?authSource=mydb"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+  - port: 8706
+    targetPort: 8706

@@ -1,0 +1,64 @@
+name: 'Deploy Project2'
+
+on:
+  push:
+    branches: [ "main", "workflow_dispatch" ]
+
+jobs: 
+  deploy:    
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-1
+
+      - name: Install eksctl
+        run: |
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin
+
+      - name: Update Kubeconfig
+        run: eksctl utils write-kubeconfig --cluster ironhack-main-2 --region us-west-1
+
+      - name: Apply Kubernetes Manifest namespace
+        run: kubectl apply -f k8s-namespace-c/namespace.yaml
+
+      - name: Set default namespace
+        run: kubectl config set-context --current --namespace=irene-p2
+
+      - name: Check current namespace
+        run: kubectl config view --minify | grep 'namespace:'
+
+      - name: Apply Kubernetes Manifests extras
+        run: | 
+          kubectl apply -f k8s-extras/storage-class-ebs-deployment.yaml -n irene-p2
+
+      - name: Apply Kubernetes Manifests extras 2
+        run: | 
+
+          kubectl apply -f k8s-extras/ingress_deployment.yaml -n irene-p2
+          kubectl apply -f k8s-extras/postgres-pvc-deployment.yaml -n irene-p2
+          kubectl apply -f k8s-extras/postgres-secret_deployment.yaml -n irene-p2
+          # kubectl apply -f k8s-extras-c/postgres-deployment.yaml -n irene-p2t
+          
+
+
+         
+
+      - name: Apply Kubernetes Manifests 
+        run: kubectl apply -f k8s/ -n irene-p2
+
+      - name: Wait for Pods to be Ready
+        run: |
+          kubectl wait --for=condition=Ready pod -l app=voting-app -n irene-p2 --timeout=120s
+          kubectl wait --for=condition=Ready pod -l app=redis -n irene-p2  --timeout=120s
+          kubectl wait --for=condition=Ready pod -l app=worker-app -n irene-p2  --timeout=120s
+          kubectl wait --for=condition=Ready pod -l app=postgres -n irene-p2  --timeout=120s
+          kubectl wait --for=condition=Ready pod -l app=result-app -n irene-p2  --timeout=120s
+        
+ 

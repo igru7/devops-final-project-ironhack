@@ -16,7 +16,7 @@ services:
 
       MONGODB_EXTRA_USERNAMES: mongo
       MONGODB_EXTRA_PASSWORDS: mongo
-      MONGODB_EXTRA_DATABASES: mydb  # ← put mongo in admin
+      MONGODB_EXTRA_DATABASES: mydb  # ← put mongo in mydb
 
     volumes:
       - mongo_data:/bitnami/mongodb
