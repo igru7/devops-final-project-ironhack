@@ -1,0 +1,28 @@
+# Ignore Terraform state files
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Ignore crash logs
+crash.log
+
+# Ignore override files (optional)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore sensitive plan files
+*.tfplan
+
+# Ignore node_modules folder
+node_modules/
+
+# Ignore log files
+*.log
+
+# Ignore system files
+.DS_Store
+
+# Ignore environment files
+.env
