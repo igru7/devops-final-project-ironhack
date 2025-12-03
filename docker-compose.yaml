@@ -1,0 +1,73 @@
+services:
+  mongo:
+    image: bitnami/mongodb:latest
+    container_name: mongo
+    networks:
+      - ironnet
+    ports:
+      - "27017:27017"
+    environment:
+      MONGODB_ROOT_USER: root
+      MONGODB_ROOT_PASSWORD: example
+
+      MONGODB_USERNAME: 1001
+      MONGODB_PASSWORD: 1001
+      MONGODB_DATABASE: admin  # ← put 1001 in admin
+
+      MONGODB_EXTRA_USERNAMES: mongo
+      MONGODB_EXTRA_PASSWORDS: mongo
+      MONGODB_EXTRA_DATABASES: mydb  # ← put mongo in admin
+
+    volumes:
+      - mongo_data:/bitnami/mongodb
+
+
+  redis:
+    image: redis:8
+    container_name: redis
+    networks:
+      - ironnet
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./expensy_backend
+    container_name: expensy_backend
+    networks:
+      - ironnet
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      DATABASE_URI: mongodb://mongo:mongo@mongo:27017/mydb?authSource=mydb
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    command: ["./wait-for-it.sh", "mongo:27017", "--", "./wait-for-it.sh", "redis:6379", "--", "npm", "start"]
+    ports:
+      - "8706:8706"
+
+  frontend:
+    build: ./expensy_frontend
+    container_name: expensy_frontend
+    networks:
+      - ironnet
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:8706"
+      HOST: 0.0.0.0
+      PORT: 3000
+    command: ["npm", "run", "dev"]
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./expensy_frontend:/app
+      
+
+networks:
+  ironnet:
+    name: ironnet
+    driver: bridge
+
+volumes:
+  mongo_data:
