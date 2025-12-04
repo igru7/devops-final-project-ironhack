@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "main", "workflow_dispatch" ]
 
+env:
+  K8S_NAMESPACE: expensy
+  IMAGE_TAG: ${{ github.sha }}    
+
 jobs: 
 
   build-and-push:
