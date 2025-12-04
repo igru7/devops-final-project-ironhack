@@ -60,17 +60,23 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          auth-type: oidc
 
       #  Install kubectl
       - name: Install kubectl
         run: az aks install-cli
 
-      #  Get AKS credentials
-      - name: Configure kubectl
-        run: |
-          az aks get-credentials \
-            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
-            --name ${{ secrets.AKS_CLUSTER_NAME }}
+      - name: Get AKS Credentials
+        uses: azure/cli@v1
+        with:
+          inlineScript: |
+            az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            az aks get-credentials \
+              --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+              --name ${{ secrets.AKS_CLUSTER_NAME }} \
+              --overwrite-existing
+
+
 
       #  Deploy / update Kubernetes manifests
       - name: Apply Kubernetes manifests
