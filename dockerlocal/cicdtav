@@ -1,0 +1,97 @@
+name: CI/CD — Build & Deploy my Restauranty application to EKS
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  K8S_NAMESPACE: tavleen
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push frontend app image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./devops.restauranty/client
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontendapp:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontendapp:latest
+
+      - name: Build & push auth app image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./devops.restauranty/backend/auth/
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/authapp:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/authapp:latest
+
+      - name: Build & push discounts app image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./devops.restauranty/backend/discounts
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/discountsapp:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/discountsapp:latest
+
+      - name: Build & push items image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./devops.restauranty/backend/items
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/itemsapp:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/itemsapp:latest
+
+  deploy:
+    name: deploy to EKS all the images created above, along with the mongo db from their kubectl files
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Update Kubeconfig
+        run: aws eks update-kubeconfig --region us-east-2 --name diogo-ft-cluster
+
+      - name: Apply Kubernetes Manifests
+        run: kubectl apply -f devops.restauranty/Kubernetes/
+
+      - name: Apply Kubernetes Ingress Manifest separately because no duplicates allowed and doesnt change much
+        run: kubectl apply -f devops.restauranty/Kubernetes-ingress || true
+
+      - name: Update Images with commit sha, that is, new image names
+        run: |
+          kubectl -n tavleen set image deployment/frontendapp frontendapp=${{ secrets.DOCKERHUB_USERNAME }}/frontendapp:${{ env.IMAGE_TAG }}
+          kubectl -n tavleen set image deployment/authapp authapp=${{ secrets.DOCKERHUB_USERNAME }}/authapp:${{ env.IMAGE_TAG }}
+          kubectl -n tavleen set image deployment/discountsapp discountsapp=${{ secrets.DOCKERHUB_USERNAME }}/discountsapp:${{ env.IMAGE_TAG }}
+          kubectl -n tavleen set image deployment/itemsapp itemsapp=${{ secrets.DOCKERHUB_USERNAME }}/itemsapp:${{ env.IMAGE_TAG }}s
