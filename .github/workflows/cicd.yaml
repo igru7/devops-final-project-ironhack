@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "main", "workflow_dispatch" ]
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   K8S_NAMESPACE: expensy
   IMAGE_TAG: ${{ github.sha }}    
@@ -49,6 +53,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
@@ -56,48 +61,20 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Install eksctl
+      #  Install kubectl
+      - name: Install kubectl
+        run: az aks install-cli
+
+      #  Get AKS credentials
+      - name: Configure kubectl
         run: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-          sudo mv /tmp/eksctl /usr/local/bin
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }}
 
-      - name: Update Kubeconfig
-        run: eksctl utils write-kubeconfig --cluster ironhack-main-2 --region us-west-1
-
-      - name: Apply Kubernetes Manifest namespace
-        run: kubectl apply -f k8s-namespace-c/namespace.yaml
-
-      - name: Set default namespace
-        run: kubectl config set-context --current --namespace=irene-p2
-
-      - name: Check current namespace
-        run: kubectl config view --minify | grep 'namespace:'
-
-      - name: Apply Kubernetes Manifests extras
-        run: | 
-          kubectl apply -f k8s-extras/storage-class-ebs-deployment.yaml -n irene-p2
-
-      - name: Apply Kubernetes Manifests extras 2
-        run: | 
-
-          kubectl apply -f k8s-extras/ingress_deployment.yaml -n irene-p2
-          kubectl apply -f k8s-extras/postgres-pvc-deployment.yaml -n irene-p2
-          kubectl apply -f k8s-extras/postgres-secret_deployment.yaml -n irene-p2
-          # kubectl apply -f k8s-extras-c/postgres-deployment.yaml -n irene-p2t
-          
-
-
-         
-
-      - name: Apply Kubernetes Manifests 
-        run: kubectl apply -f k8s/ -n irene-p2
-
-      - name: Wait for Pods to be Ready
+      #  Deploy / update Kubernetes manifests
+      - name: Apply Kubernetes manifests
         run: |
-          kubectl wait --for=condition=Ready pod -l app=voting-app -n irene-p2 --timeout=120s
-          kubectl wait --for=condition=Ready pod -l app=redis -n irene-p2  --timeout=120s
-          kubectl wait --for=condition=Ready pod -l app=worker-app -n irene-p2  --timeout=120s
-          kubectl wait --for=condition=Ready pod -l app=postgres -n irene-p2  --timeout=120s
-          kubectl wait --for=condition=Ready pod -l app=result-app -n irene-p2  --timeout=120s
-        
- 
+          kubectl apply -k k8s/.
+
+     
