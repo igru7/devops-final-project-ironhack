@@ -79,3 +79,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
     azurerm_role_assignment.cp_mi_mio
   ]
 }
+
+resource "azurerm_public_ip" "ingress_ip" {
+  name                = "ingress-ip"
+  resource_group_name = data.azurerm_resource_group.aks_managed_rg.name
+  location            = azurerm_kubernetes_cluster.aks.location
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}

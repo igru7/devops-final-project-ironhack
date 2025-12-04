@@ -18,5 +18,7 @@ output "aks_cp_identity_id" {
   value = azurerm_user_assigned_identity.cp_mi.id
 }
 
-
-
+output "ingress_public_ip" {
+  description = "Public IP of the NGINX Ingress Controller"
+  value       = azurerm_public_ip.ingress_ip.ip_address
+}

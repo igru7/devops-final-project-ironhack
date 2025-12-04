@@ -1,39 +1,27 @@
-# =====================
-# Step 1: Define the Base Image (Runtime)
-# =====================
-FROM node:20-alpine AS base
-WORKDIR /app
-# Expose the port your frontend app will run on
-EXPOSE 3000
-ENV HOST=0.0.0.0
-ENV PORT=3000
+# Frontend Dockerfile
+FROM node:18-slim
 
-# =====================
-# Step 2: Build the Application
-# =====================
-FROM node:20-alpine AS build
-WORKDIR /src
-# Copy package.json and package-lock.json first for caching
+# Set working directory
+WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
-# Copy all frontend source files
+
+# Copy source code
 COPY . .
 
-# =====================
-# Step 3: Publish the Application
-# =====================
-FROM build AS publish
-WORKDIR /app
-COPY --from=build /src ./
-# If using a frontend framework (React/Vue/Angular), run build command
+
+# Build the application
 RUN npm run build
 
-# =====================
-# Final Stage
-# =====================
-FROM node:20-alpine AS final
-WORKDIR /app
-COPY --from=publish /app ./
-# For production, you may serve with a lightweight server like serve
-RUN npm install -g serve
-ENTRYPOINT ["serve", "-s", "build", "-l", "3000"]
+# Expose port
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Start the application
+CMD ["npm", "start"]

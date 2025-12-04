@@ -26,42 +26,42 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: mongo-secret
-                  key: MONGODB_ROOT_USER
+                  key: mongo_root_user
             - name: MONGODB_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mongo-secret
-                  key: MONGODB_ROOT_PASSWORD
+                  key: mongo_root_password
             - name: MONGODB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: mongo-secret
-                  key: MONGODB_USERNAME
+                  key: mongo_1001_user
             - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mongo-secret
-                  key: MONGODB_PASSWORD
+                  key: mongo_1001_password
             - name: MONGODB_DATABASE
               valueFrom:
                 secretKeyRef:
                   name: mongo-secret
-                  key: MONGODB_DATABASE
-            - name: MONGODB_EXTRA_USERNAME
+                  key: mongo_1001_database
+            - name: MONGODB_EXTRA_USERNAMES
               valueFrom:
                 secretKeyRef:
                   name: mongo-secret
-                  key: MONGODB_EXTRA_USERNAME
-            - name: MONGODB_EXTRA_PASSWORD
+                  key: mongo_extra_user
+            - name: MONGODB_EXTRA_PASSWORDS
               valueFrom:
                 secretKeyRef:
                   name: mongo-secret
-                  key: MONGODB_EXTRA_PASSWORD
-            - name: MONGODB_EXTRA_DATABASE
+                  key: mongo_extra_password
+            - name: MONGODB_EXTRA_DATABASES
               valueFrom:
                 secretKeyRef:
                   name: mongo-secret
-                  key: MONGODB_EXTRA_DATABASE
+                  key: mongo_extra_database
           volumeMounts:
             - name: mongo-storage
               mountPath: /bitnami/mongodb

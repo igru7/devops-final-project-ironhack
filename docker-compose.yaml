@@ -63,7 +63,6 @@ services:
     volumes:
       - ./expensy_frontend:/app
       
-
 networks:
   ironnet:
     name: ironnet

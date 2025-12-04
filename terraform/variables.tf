@@ -34,3 +34,7 @@ variable "aks_version" {
   description = "Kubernetes version for the AKS cluster"
   default     = "1.32.9"
 }
+
+data "azurerm_resource_group" "aks_managed_rg" {
+  name = azurerm_kubernetes_cluster.aks.node_resource_group
+}
