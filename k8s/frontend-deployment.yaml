@@ -19,20 +19,7 @@ spec:
           - containerPort: 3000
         env:                     
           - name: NEXT_PUBLIC_API_URL
-            value: "http://backend:8706"
+            value: "http://51.8.244.156:8706"
+            
         
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 80
-    targetPort: 3000
-    protocol: TCP
-    name: http
-  selector:
-    app: frontend
